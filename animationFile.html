@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyberpunk Interface</title>
+    <style>
+        :root {
+            --primary: #0ff;
+            --bg: #121212;
+            --text: #0ff;
+            --box: #002;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Courier New', monospace;
+            overflow-x: hidden;
+        }
+
+        section {
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 800px;
+            border: 2px solid var(--primary);
+            position: relative;
+            transition: transform 0.5s;
+        }
+
+        .gatekeeper {
+            background: var(--box);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 0 15px var(--primary);
+        }
+
+        button {
+            background: none;
+            border: 2px solid var(--primary);
+            color: var(--text);
+            padding: 1rem 2rem;
+            margin: 0.5rem;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: 0.3s;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, var(--primary), transparent);
+            animation: scan 3s infinite linear;
+        }
+
+        @keyframes scan {
+            0% { transform: rotate(0deg) translateX(-50%); }
+            100% { transform: rotate(360deg) translateX(-50%); }
+        }
+
+        .glitch-text {
+            text-shadow: 2px 2px var(--primary);
+            transition: 0.3s;
+        }
+
+        .glow {
+            animation: glow-pulse 1s infinite alternate;
+        }
+
+        @keyframes glow-pulse {
+            from { filter: drop-shadow(0 0 2px var(--primary)); }
+            to { filter: drop-shadow(0 0 10px var(--primary)); }
+        }
+
+        .cyber-avatar {
+            width: 100px;
+            height: 100px;
+            background: #333;
+            position: relative;
+            margin: 1rem auto;
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .matrix-fall {
+            position: fixed;
+            pointer-events: none;
+            opacity: 0.1;
+            z-index: -1;
+        }
+
+        @keyframes matrix {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100vh); }
+        }
+    </style>
+</head>
+<body>
+    <section class="gatekeeper" id="control-section">
+        <button id="themeShift">Shift Reality</button>
+        <button id="glowToggle">Activate Glow</button>
+        <button id="avatarDance">Initiate Dance</button>
+    </section>
+
+    <section class="gatekeeper" id="avatar-section">
+        <div class="cyber-avatar"></div>
+    </section>
+
+    <section class="gatekeeper" id="message-section">
+        <button id="addMessage">Store Message</button>
+        <button id="clearMessages">Purge Data</button>
+        <div id="messageDisplay"></div>
+    </section>
+
+    <script>
+        const createMatrixEffect = () => {
+            const chars = '01';
+            const container = document.createElement('div');
+            container.className = 'matrix-fall';
+            container.style.left = `${Math.random() * 100}%`;
+            container.style.animation = `matrix ${5 + Math.random() * 10}s linear`;
+            container.textContent = Array(50).fill().map(() => 
+                chars[Math.floor(Math.random() * chars.length)]).join('');
+            document.body.appendChild(container);
+            container.addEventListener('animationend', () => container.remove());
+        }
+
+        // Local Storage Manager
+        const store = {
+            get: (key) => JSON.parse(localStorage.getItem(key)),
+            set: (key, value) => localStorage.setItem(key, JSON.stringify(value)),
+            clear: () => localStorage.clear()
+        };
+
+        // Theme Engine
+        const themes = {
+            neon: { primary: '#0ff', bg: '#121212', text: '#0ff', box: '#002' },
+            blood: { primary: '#f00', bg: '#110000', text: '#f00', box: '#200' },
+            matrix: { primary: '#0f0', bg: '#000', text: '#0f0', box: '#020' }
+        };
+
+        let currentTheme = store.get('theme') || 'neon';
+        document.documentElement.style.setProperty('--primary', themes[currentTheme].primary);
+        document.documentElement.style.setProperty('--bg', themes[currentTheme].bg);
+        document.documentElement.style.setProperty('--text', themes[currentTheme].text);
+        document.documentElement.style.setProperty('--box', themes[currentTheme].box);
+
+        document.getElementById('themeShift').addEventListener('click', () => {
+            const themeKeys = Object.keys(themes);
+            currentTheme = themeKeys[(themeKeys.indexOf(currentTheme) + 1) % themeKeys.length];
+            store.set('theme', currentTheme);
+            location.reload();
+        });
+
+        // Glow System
+        const toggleGlow = () => {
+            document.querySelectorAll('button').forEach(btn => 
+                btn.classList.toggle('glow'));
+            store.set('glowActive', !store.get('glowActive'));
+        };
+
+        document.getElementById('glowToggle').addEventListener('click', toggleGlow);
+        if (store.get('glowActive')) toggleGlow();
+
+        // Avatar Dance Core
+        const avatar = document.querySelector('.cyber-avatar');
+        const danceMoves = ['float', 'spin', 'shake'];
+        let currentDance = 0;
+
+        const performDance = () => {
+            avatar.style.animation = `${danceMoves[currentDance]} 1s infinite`;
+            currentDance = (currentDance + 1) % danceMoves.length;
+        };
+
+        document.getElementById('avatarDance').addEventListener('click', performDance);
+
+        // Message Archivist
+        const displayMessages = () => {
+            const messages = store.get('messages') || [];
+            document.getElementById('messageDisplay').innerHTML = messages
+                .map((msg, i) => `<div style="animation: textSlide${i % 4} 5s">${msg}</div>`)
+                .join('');
+        };
+
+        document.getElementById('addMessage').addEventListener('click', () => {
+            const msg = prompt('Enter encrypted message:');
+            if (msg) {
+                const messages = store.get('messages') || [];
+                messages.push(msg);
+                store.set('messages', messages);
+                displayMessages();
+            }
+        });
+
+        document.getElementById('clearMessages').addEventListener('click', () => {
+            store.set('messages', []);
+            displayMessages();
+        });
+
+        // Initialize
+        displayMessages();
+        setInterval(createMatrixEffect, 100);
+        setInterval(() => {
+            document.querySelectorAll('section').forEach(section => {
+                section.style.transform = `rotate(${Math.sin(Date.now()/1000)*0.5}deg)`;
+            });
+        }, 16);
+    </script>
+</body>
+</html>
